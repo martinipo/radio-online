@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WinAMP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/winamp.css">
+</head>
+<body>
+
+    <!-- ===== MAIN PLAYER WINDOW ===== -->
+    <div id="player-window" class="window">
+
+        <div class="titlebar" id="player-titlebar">
+            <span class="title-text">WINAMP</span>
+            <div class="tb-controls">
+                <button class="tb-btn" id="btn-minimize" title="Minimizar">_</button>
+                <button class="tb-btn tb-close" id="btn-close-player" title="Cerrar">×</button>
+            </div>
+        </div>
+
+        <!-- Display area -->
+        <div class="display">
+
+            <!-- Top row: song info + time -->
+            <div class="display-top">
+                <div class="song-info">
+                    <div class="song-title-wrap">
+                        <div class="song-title" id="song-title">No hay pista &nbsp;&nbsp; No hay pista &nbsp;&nbsp;</div>
+                    </div>
+                    <div class="song-stats">
+                        <span class="stat-val" id="stat-kbps">---</span><span class="stat-lbl"> kbps </span>
+                        <span class="stat-val" id="stat-khz">--</span><span class="stat-lbl"> kHz </span>
+                        <span class="stat-val" id="stat-ch">stereo</span>
+                    </div>
+                </div>
+                <div class="time-block">
+                    <div class="time-sign" id="time-sign" title="Alternar tiempo restante">&#9654;</div>
+                    <div class="time-digits" id="time-display">0:00</div>
+                </div>
+            </div>
+
+            <!-- Visualizer canvas -->
+            <canvas id="visualizer" width="248" height="36"></canvas>
+
+        </div><!-- /display -->
+
+        <!-- Clutter bar -->
+        <div class="clutter-bar">
+            <button class="clutter-btn" id="cb-eq" title="Ecualizador">EQ</button>
+            <button class="clutter-btn active" id="cb-pl" title="Lista de reproducción">PL</button>
+            <div style="flex:1"></div>
+            <button class="sr-btn" id="btn-shuffle" title="Aleatorio">SHF</button>
+            <button class="sr-btn" id="btn-repeat" title="Repetir">REP</button>
+        </div>
+
+        <!-- Seek bar -->
+        <div class="seekbar-row">
+            <div class="seekbar-track" id="seekbar-track">
+                <div class="seekbar-fill" id="seekbar-fill"></div>
+                <div class="seekbar-thumb" id="seekbar-thumb"></div>
+            </div>
+        </div>
+
+        <!-- Volume & Balance -->
+        <div class="sliders-row">
+            <span class="sl-label">VOL</span>
+            <input type="range" id="volume" class="win-slider vol-slider" min="0" max="100" value="80">
+            <span class="sl-label">BAL</span>
+            <input type="range" id="balance" class="win-slider bal-slider" min="-100" max="100" value="0">
+        </div>
+
+        <!-- Transport buttons -->
+        <div class="transport">
+            <button class="t-btn" id="btn-prev" title="Anterior (Alt+←)">&#9664;&#9664;</button>
+            <button class="t-btn t-play" id="btn-play" title="Reproducir (Espacio)">&#9654;</button>
+            <button class="t-btn t-pause" id="btn-pause" title="Pausar (Espacio)">&#9646;&#9646;</button>
+            <button class="t-btn t-stop" id="btn-stop" title="Detener (S)">&#9632;</button>
+            <button class="t-btn" id="btn-next" title="Siguiente (Alt+→)">&#9654;&#9654;</button>
+            <button class="t-btn t-eject" id="btn-eject" title="Abrir archivos">&#9099;</button>
+        </div>
+
+    </div><!-- /player-window -->
+
+
+    <!-- ===== PLAYLIST WINDOW ===== -->
+    <div id="playlist-window" class="window pl-window">
+
+        <div class="titlebar" id="playlist-titlebar">
+            <span class="title-text">PLAYLIST EDITOR</span>
+            <div class="tb-controls">
+                <button class="tb-btn tb-close" id="btn-close-pl" title="Cerrar">×</button>
+            </div>
+        </div>
+
+        <div class="pl-body" id="pl-body">
+            <div id="pl-list" class="pl-list"></div>
+            <div id="pl-empty" class="pl-empty">
+                Arrastra archivos de audio aquí<br>
+                o usa los botones de abajo
+            </div>
+        </div>
+
+        <div class="pl-footer">
+            <div class="pl-btn-group">
+                <button class="pl-btn" id="pl-add-files" title="Agregar archivos de audio">+ARC</button>
+                <button class="pl-btn" id="pl-add-folder" title="Agregar carpeta completa">+CARP</button>
+                <button class="pl-btn" id="pl-add-url" title="Agregar URL / Stream de radio">+URL</button>
+            </div>
+            <div class="pl-btn-group">
+                <button class="pl-btn" id="pl-remove-sel" title="Eliminar seleccionados">-SEL</button>
+                <button class="pl-btn" id="pl-clear" title="Limpiar lista">CLR</button>
+            </div>
+            <div class="pl-btn-group">
+                <button class="pl-btn" id="pl-save" title="Guardar como M3U">SAVE</button>
+            </div>
+            <button class="pl-btn pl-btn-fav" id="pl-filter-fav" title="Mostrar solo favoritos">★ FAV</button>
+            <button class="pl-btn pl-btn-cl" id="pl-load-cl" title="Cargar radios chilenas">&#127464;&#127473; RADIOS CL</button>
+            <span class="pl-count" id="pl-count">0 pistas</span>
+        </div>
+
+        <div class="resize-handle" id="pl-resize"></div>
+    </div><!-- /playlist-window -->
+
+
+    <!-- ===== URL DIALOG ===== -->
+    <div id="url-dialog" class="modal-overlay hidden">
+        <div class="modal-win">
+            <div class="titlebar">
+                <span class="title-text">AGREGAR URL / STREAM</span>
+                <div class="tb-controls">
+                    <button class="tb-btn tb-close" id="url-close">×</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <p class="modal-hint">Ingresa URLs de audio o streams de radio, una por línea:</p>
+                <textarea id="url-textarea" rows="7"
+                    placeholder="https://stream.radio.com/live&#10;https://ejemplo.com/cancion.mp3&#10;https://icecast.server.net:8000/stream"></textarea>
+                <div class="modal-btns">
+                    <button id="url-add">Agregar</button>
+                    <button id="url-cancel">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Hidden inputs -->
+    <input type="file" id="file-input" multiple
+        accept="audio/*,.mp3,.flac,.ogg,.wav,.aac,.m4a,.opus,.wma,.m3u,.m3u8,.pls"
+        style="display:none">
+    <input type="file" id="folder-input" multiple
+        accept="audio/*" webkitdirectory
+        style="display:none">
+
+    <!-- Audio element -->
+    <audio id="audio-el" preload="none"></audio>
+
+    <script src="js/visualizer.js"></script>
+    <script src="js/playlist.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/radios-chile.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
