@@ -72,6 +72,10 @@ const UI = {
     /* URL dialog */
     urlDialog:      $('url-dialog'),
     urlTextarea:    $('url-textarea'),
+    urlName:        $('url-name'),
+    urlSaveBtn:     $('url-save-btn'),
+    urlSavedSection:$('url-saved-section'),
+    urlSavedList:   $('url-saved-list'),
     urlAdd:         $('url-add'),
     urlCancel:      $('url-cancel'),
     urlClose:       $('url-close'),
@@ -92,6 +96,24 @@ const state = {
     selected:      new Set(),
     scrollTimer:   null,
     showFavOnly:   false,
+};
+
+/* Saved radios — persisted in localStorage */
+const savedRadios = {
+    _key: 'winamp_saved_radios',
+    _list: JSON.parse(localStorage.getItem('winamp_saved_radios') || '[]'),
+    save(name, url) {
+        this._list.push({ name, url });
+        this._persist();
+    },
+    remove(idx) {
+        this._list.splice(idx, 1);
+        this._persist();
+    },
+    _persist() {
+        localStorage.setItem(this._key, JSON.stringify(this._list));
+    },
+    all() { return this._list; },
 };
 
 /* Favorites — persisted in localStorage by track.src */
@@ -382,11 +404,45 @@ UI.btnMinimize.addEventListener('click', () => {
 
 function openUrlDialog() {
     UI.urlDialog.classList.remove('hidden');
+    renderSavedRadios();
     UI.urlTextarea.focus();
 }
 function closeUrlDialog() {
     UI.urlDialog.classList.add('hidden');
     UI.urlTextarea.value = '';
+    UI.urlName.value = '';
+}
+
+function renderSavedRadios() {
+    const list = savedRadios.all();
+    if (!list.length) {
+        UI.urlSavedSection.style.display = 'none';
+        return;
+    }
+    UI.urlSavedSection.style.display = 'block';
+    UI.urlSavedList.innerHTML = list.map((r, i) =>
+        `<div class="saved-radio-item">
+            <span class="saved-radio-name" title="${escHtml(r.url)}">${escHtml(r.name)}</span>
+            <button class="saved-radio-add" data-i="${i}" title="Agregar a playlist">▶</button>
+            <button class="saved-radio-del" data-i="${i}" title="Eliminar">✕</button>
+        </div>`
+    ).join('');
+
+    UI.urlSavedList.querySelectorAll('.saved-radio-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const r = savedRadios.all()[+btn.dataset.i];
+            const wasEmpty = !playlist.length;
+            playlist.add([new Track({ src: r.url, title: r.name, type: 'url' })]);
+            if (wasEmpty) playlist.jumpTo(0);
+            closeUrlDialog();
+        });
+    });
+    UI.urlSavedList.querySelectorAll('.saved-radio-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+            savedRadios.remove(+btn.dataset.i);
+            renderSavedRadios();
+        });
+    });
 }
 
 UI.urlAdd.addEventListener('click', () => {
@@ -404,6 +460,15 @@ UI.urlAdd.addEventListener('click', () => {
     playlist.add(tracks);
     if (wasEmpty) playlist.jumpTo(0);
     closeUrlDialog();
+});
+
+UI.urlSaveBtn.addEventListener('click', () => {
+    const url = UI.urlTextarea.value.split('\n').map(l => l.trim()).find(l => /^https?:\/\//i.test(l));
+    if (!url) { alert('Ingresa una URL válida (http:// o https://) para guardar'); return; }
+    const name = UI.urlName.value.trim() || decodeURIComponent(url.split('/').pop().split('?')[0]) || url;
+    savedRadios.save(name, url);
+    UI.urlName.value = '';
+    renderSavedRadios();
 });
 
 UI.urlCancel.addEventListener('click', closeUrlDialog);

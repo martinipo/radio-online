@@ -136,8 +136,16 @@
             </div>
             <div class="modal-body">
                 <p class="modal-hint">Ingresa URLs de audio o streams de radio, una por línea:</p>
-                <textarea id="url-textarea" rows="7"
+                <textarea id="url-textarea" rows="4"
                     placeholder="https://stream.radio.com/live&#10;https://ejemplo.com/cancion.mp3&#10;https://icecast.server.net:8000/stream"></textarea>
+                <div class="url-save-row">
+                    <input type="text" id="url-name" placeholder="Nombre de la radio (para guardar)">
+                    <button id="url-save-btn">💾 Guardar</button>
+                </div>
+                <div id="url-saved-section" class="url-saved-section" style="display:none">
+                    <p class="modal-hint" style="margin-top:8px">Radios guardadas:</p>
+                    <div id="url-saved-list" class="url-saved-list"></div>
+                </div>
                 <div class="modal-btns">
                     <button id="url-add">Agregar</button>
                     <button id="url-cancel">Cancelar</button>

@@ -584,6 +584,77 @@ body {
 }
 
 
+/* ===== URL DIALOG EXTRAS ===== */
+.url-save-row {
+    display: flex;
+    gap: 5px;
+    margin-top: 6px;
+}
+.url-save-row input {
+    flex: 1;
+    background: #050805;
+    border-top:    1px solid #111;
+    border-left:   1px solid #111;
+    border-bottom: 1px solid #444;
+    border-right:  1px solid #444;
+    color: var(--led);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 4px 6px;
+    outline: none;
+}
+.url-save-row button {
+    padding: 3px 10px;
+    font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    border-top:    1px solid var(--btn-hi);
+    border-left:   1px solid var(--btn-hi);
+    border-bottom: 1px solid var(--btn-lo);
+    border-right:  1px solid var(--btn-lo);
+    background: var(--btn-bg);
+    color: #ccc;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.url-save-row button:hover { background: #444; }
+
+.url-saved-list {
+    max-height: 110px;
+    overflow-y: auto;
+    background: #050805;
+    border: 1px solid #333;
+}
+.saved-radio-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-bottom: 1px solid #1a1a1a;
+}
+.saved-radio-item:last-child { border-bottom: none; }
+.saved-radio-name {
+    flex: 1;
+    color: var(--led);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.saved-radio-add,
+.saved-radio-del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 5px;
+    color: #777;
+    flex-shrink: 0;
+}
+.saved-radio-add:hover { color: var(--led); }
+.saved-radio-del:hover { color: #f55; }
+
+
 /* ===== RESIZE HANDLE ===== */
 .resize-handle {
     position: absolute;
