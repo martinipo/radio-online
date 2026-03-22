@@ -119,6 +119,7 @@
             <button class="pl-btn pl-btn-fav" id="pl-filter-fav" title="Mostrar solo favoritos">★ FAV</button>
             <button class="pl-btn pl-btn-cl" id="pl-load-cl" title="Cargar radios chilenas">&#127464;&#127473; RADIOS CL</button>
             <button class="pl-btn pl-btn-my" id="pl-load-my" title="Cargar mis radios guardadas">★ MIS RADIOS</button>
+            <button class="pl-btn pl-btn-sync" id="pl-sync-cfg" title="Configurar sincronización en la nube">☁ NUBE</button>
             <span class="pl-count" id="pl-count">0 pistas</span>
         </div>
 
@@ -150,6 +151,37 @@
                 <div class="modal-btns">
                     <button id="url-add">Agregar</button>
                     <button id="url-cancel">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== SYNC DIALOG ===== -->
+    <div id="sync-dialog" class="modal-overlay hidden">
+        <div class="modal-win">
+            <div class="titlebar">
+                <span class="title-text">☁ SINCRONIZACIÓN EN LA NUBE</span>
+                <div class="tb-controls">
+                    <button class="tb-btn tb-close" id="sync-close">×</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <p class="modal-hint">Usa <strong>jsonbin.io</strong> (gratis) para sincronizar tus radios entre dispositivos.</p>
+                <ol class="sync-steps">
+                    <li>Crea cuenta gratis en <strong>jsonbin.io</strong></li>
+                    <li>Ve a <strong>API Keys</strong> y copia tu <strong>Master Key</strong></li>
+                    <li>Crea un <strong>Bin</strong> nuevo (privado) — copia su <strong>ID</strong></li>
+                </ol>
+                <label class="sync-label">Master Key</label>
+                <input type="password" id="sync-key" placeholder="$2a$10$...">
+                <label class="sync-label" style="margin-top:6px">Bin ID</label>
+                <input type="text" id="sync-bin" placeholder="64abc123def456...">
+                <div id="sync-status" class="sync-status"></div>
+                <div class="modal-btns">
+                    <button id="sync-save-btn">Guardar y Sincronizar</button>
+                    <button id="sync-clear-btn">Desconectar</button>
+                    <button id="sync-cancel">Cancelar</button>
                 </div>
             </div>
         </div>

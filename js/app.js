@@ -70,6 +70,16 @@ const UI = {
     plLoadCl:       $('pl-load-cl'),
     plFilterFav:    $('pl-filter-fav'),
     plLoadMy:       $('pl-load-my'),
+    plSyncCfg:      $('pl-sync-cfg'),
+    /* Sync dialog */
+    syncDialog:     $('sync-dialog'),
+    syncKey:        $('sync-key'),
+    syncBin:        $('sync-bin'),
+    syncStatus:     $('sync-status'),
+    syncSaveBtn:    $('sync-save-btn'),
+    syncClearBtn:   $('sync-clear-btn'),
+    syncCancel:     $('sync-cancel'),
+    syncClose:      $('sync-close'),
     /* URL dialog */
     urlDialog:      $('url-dialog'),
     urlTextarea:    $('url-textarea'),
@@ -99,22 +109,73 @@ const state = {
     showFavOnly:   false,
 };
 
-/* Saved radios — persisted in localStorage */
+/* Saved radios — persisted in localStorage + optional cloud sync */
 const savedRadios = {
     _key: 'winamp_saved_radios',
     _list: JSON.parse(localStorage.getItem('winamp_saved_radios') || '[]'),
     save(name, url) {
         this._list.push({ name, url });
         this._persist();
+        cloudSync.push(this._list);
     },
     remove(idx) {
         this._list.splice(idx, 1);
+        this._persist();
+        cloudSync.push(this._list);
+    },
+    setAll(list) {
+        this._list = list;
         this._persist();
     },
     _persist() {
         localStorage.setItem(this._key, JSON.stringify(this._list));
     },
     all() { return this._list; },
+};
+
+/* Cloud sync via JSONBin.io */
+const cloudSync = {
+    _keyK: 'winamp_sync_key',
+    _binK: 'winamp_sync_bin',
+    get masterKey() { return localStorage.getItem(this._keyK) || ''; },
+    get binId()     { return localStorage.getItem(this._binK) || ''; },
+    isConfigured()  { return !!(this.masterKey && this.binId); },
+
+    configure(key, bin) {
+        localStorage.setItem(this._keyK, key.trim());
+        localStorage.setItem(this._binK, bin.trim());
+    },
+    clear() {
+        localStorage.removeItem(this._keyK);
+        localStorage.removeItem(this._binK);
+    },
+
+    async pull() {
+        if (!this.isConfigured()) return null;
+        try {
+            const r = await fetch(`https://api.jsonbin.io/v3/b/${this.binId}/latest`, {
+                headers: { 'X-Master-Key': this.masterKey, 'X-Bin-Meta': 'false' }
+            });
+            if (!r.ok) return null;
+            const data = await r.json();
+            return Array.isArray(data.radios) ? data.radios : null;
+        } catch { return null; }
+    },
+
+    async push(radios) {
+        if (!this.isConfigured()) return false;
+        try {
+            const r = await fetch(`https://api.jsonbin.io/v3/b/${this.binId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': this.masterKey,
+                },
+                body: JSON.stringify({ radios }),
+            });
+            return r.ok;
+        } catch { return false; }
+    },
 };
 
 /* Favorites — persisted in localStorage by track.src */
@@ -503,6 +564,52 @@ UI.urlDialog.addEventListener('click', e => { if (e.target === UI.urlDialog) clo
 // Submit on Ctrl+Enter inside textarea
 UI.urlTextarea.addEventListener('keydown', e => {
     if (e.key === 'Enter' && e.ctrlKey) UI.urlAdd.click();
+});
+
+
+/* ===================== SYNC DIALOG ===================== */
+
+function openSyncDialog() {
+    UI.syncKey.value = cloudSync.masterKey;
+    UI.syncBin.value = cloudSync.binId;
+    UI.syncStatus.textContent = cloudSync.isConfigured() ? '✓ Configurado' : '';
+    UI.syncStatus.className = 'sync-status' + (cloudSync.isConfigured() ? ' ok' : '');
+    UI.syncDialog.classList.remove('hidden');
+}
+function closeSyncDialog() { UI.syncDialog.classList.add('hidden'); }
+
+UI.plSyncCfg.addEventListener('click', openSyncDialog);
+UI.syncClose.addEventListener('click',  closeSyncDialog);
+UI.syncCancel.addEventListener('click', closeSyncDialog);
+UI.syncDialog.addEventListener('click', e => { if (e.target === UI.syncDialog) closeSyncDialog(); });
+
+UI.syncSaveBtn.addEventListener('click', async () => {
+    const key = UI.syncKey.value.trim();
+    const bin = UI.syncBin.value.trim();
+    if (!key || !bin) { UI.syncStatus.textContent = '⚠ Completa ambos campos'; UI.syncStatus.className = 'sync-status err'; return; }
+    cloudSync.configure(key, bin);
+    UI.syncStatus.textContent = 'Sincronizando...';
+    UI.syncStatus.className = 'sync-status';
+    const remote = await cloudSync.pull();
+    if (remote === null) {
+        // Push local data to the new bin
+        const ok = await cloudSync.push(savedRadios.all());
+        UI.syncStatus.textContent = ok ? '✓ Conectado — datos locales subidos' : '✗ Error al conectar. Verifica Key y Bin ID';
+        UI.syncStatus.className = 'sync-status ' + (ok ? 'ok' : 'err');
+    } else {
+        savedRadios.setAll(remote);
+        renderSavedRadios();
+        UI.syncStatus.textContent = `✓ Sincronizado — ${remote.length} radio(s) cargadas`;
+        UI.syncStatus.className = 'sync-status ok';
+    }
+    UI.plSyncCfg.classList.toggle('active', cloudSync.isConfigured());
+});
+
+UI.syncClearBtn.addEventListener('click', () => {
+    cloudSync.clear();
+    UI.syncStatus.textContent = 'Desconectado';
+    UI.syncStatus.className = 'sync-status';
+    UI.plSyncCfg.classList.remove('active');
 });
 
 
@@ -917,6 +1024,16 @@ function init() {
     syncCount();
     syncPlayState();
     visualizer.start();
+
+    // Restore sync button state and pull from cloud on load
+    UI.plSyncCfg.classList.toggle('active', cloudSync.isConfigured());
+    if (cloudSync.isConfigured()) {
+        cloudSync.pull().then(remote => {
+            if (remote && remote.length) {
+                savedRadios.setAll(remote);
+            }
+        });
+    }
 }
 
 /* ===================== UTILS ===================== */
