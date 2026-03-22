@@ -752,27 +752,45 @@ document.addEventListener('keydown', e => {
 function makeDraggable(win, handle) {
     let dragging = false, ox = 0, oy = 0;
 
+    function startDrag(clientX, clientY) {
+        dragging = true;
+        ox = clientX - win.offsetLeft;
+        oy = clientY - win.offsetTop;
+        win.style.zIndex = 10;
+    }
+    function moveDrag(clientX, clientY) {
+        if (!dragging) return;
+        win.style.left = clamp(clientX - ox, 0, window.innerWidth  - win.offsetWidth)  + 'px';
+        win.style.top  = clamp(clientY - oy, 0, window.innerHeight - win.offsetHeight) + 'px';
+    }
+
     handle.addEventListener('mousedown', e => {
         if (e.target.tagName === 'BUTTON') return;
-        dragging = true;
-        ox = e.clientX - win.offsetLeft;
-        oy = e.clientY - win.offsetTop;
-        win.style.zIndex = 10;
+        startDrag(e.clientX, e.clientY);
         e.preventDefault();
     });
-
-    document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        win.style.left = clamp(e.clientX - ox, 0, window.innerWidth  - win.offsetWidth)  + 'px';
-        win.style.top  = clamp(e.clientY - oy, 0, window.innerHeight - win.offsetHeight) + 'px';
-    });
-
+    document.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
     document.addEventListener('mouseup', () => { dragging = false; });
+
+    handle.addEventListener('touchstart', e => {
+        if (e.target.tagName === 'BUTTON') return;
+        startDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    document.addEventListener('touchmove', e => {
+        if (!dragging) return;
+        e.preventDefault();
+        moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+    document.addEventListener('touchend', () => { dragging = false; });
 
     win.addEventListener('mousedown', () => {
         document.querySelectorAll('.window').forEach(w => w.style.zIndex = '1');
         win.style.zIndex = '2';
     });
+    win.addEventListener('touchstart', () => {
+        document.querySelectorAll('.window').forEach(w => w.style.zIndex = '1');
+        win.style.zIndex = '2';
+    }, { passive: true });
 }
 
 
@@ -781,26 +799,40 @@ function makeDraggable(win, handle) {
 function makeResizable(win, handle) {
     let resizing = false, startX = 0, startY = 0, startW = 0, startH = 0;
 
-    handle.addEventListener('mousedown', e => {
+    function startResize(clientX, clientY) {
         resizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        startX = clientX;
+        startY = clientY;
         startW = win.offsetWidth;
         startH = win.offsetHeight;
         win.style.zIndex = 10;
+    }
+    function doResize(clientX, clientY) {
+        if (!resizing) return;
+        const newW = clamp(startW + (clientX - startX), 220, window.innerWidth  - win.offsetLeft - 10);
+        const newH = clamp(startH + (clientY - startY), 140, window.innerHeight - win.offsetTop  - 10);
+        win.style.width  = newW + 'px';
+        win.style.height = newH + 'px';
+    }
+
+    handle.addEventListener('mousedown', e => {
+        startResize(e.clientX, e.clientY);
         e.preventDefault();
         e.stopPropagation();
     });
-
-    document.addEventListener('mousemove', e => {
-        if (!resizing) return;
-        const newW = clamp(startW + (e.clientX - startX), 220, window.innerWidth  - win.offsetLeft - 10);
-        const newH = clamp(startH + (e.clientY - startY), 140, window.innerHeight - win.offsetTop  - 10);
-        win.style.width  = newW + 'px';
-        win.style.height = newH + 'px';
-    });
-
+    document.addEventListener('mousemove', e => doResize(e.clientX, e.clientY));
     document.addEventListener('mouseup', () => { resizing = false; });
+
+    handle.addEventListener('touchstart', e => {
+        startResize(e.touches[0].clientX, e.touches[0].clientY);
+        e.stopPropagation();
+    }, { passive: true });
+    document.addEventListener('touchmove', e => {
+        if (!resizing) return;
+        e.preventDefault();
+        doResize(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+    document.addEventListener('touchend', () => { resizing = false; });
 }
 
 
@@ -851,7 +883,8 @@ const layout = {
 };
 
 // Guarda posición al soltar el mouse después de mover o redimensionar
-document.addEventListener('mouseup', () => layout.save());
+document.addEventListener('mouseup',  () => layout.save());
+document.addEventListener('touchend', () => layout.save());
 
 
 /* ===================== INIT ===================== */
