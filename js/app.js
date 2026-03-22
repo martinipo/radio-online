@@ -69,6 +69,7 @@ const UI = {
     plSave:         $('pl-save'),
     plLoadCl:       $('pl-load-cl'),
     plFilterFav:    $('pl-filter-fav'),
+    plLoadMy:       $('pl-load-my'),
     /* URL dialog */
     urlDialog:      $('url-dialog'),
     urlTextarea:    $('url-textarea'),
@@ -323,6 +324,30 @@ $('pl-load-cl').addEventListener('click', () => {
     if (playlist.length > 0) {
         const replace = confirm(
             `¿Reemplazar la lista actual con las ${tracks.length} radios chilenas?\n` +
+            'Cancelar = agregar al final de la lista actual.'
+        );
+        if (replace) {
+            player.stop();
+            state.playing = false;
+            state.selected.clear();
+            playlist.clear();
+            setTitle('No hay pista cargada');
+            syncPlayState();
+            syncSeekbar(0, 0);
+            syncTimeDisplay(0, 0);
+        }
+    }
+    playlist.add(tracks);
+    if (!playlist.current) playlist.jumpTo(0);
+});
+
+UI.plLoadMy.addEventListener('click', () => {
+    const list = savedRadios.all();
+    if (!list.length) { alert('No tienes radios guardadas.\nUsa el botón +URL para guardar una.'); return; }
+    const tracks = list.map(r => new Track({ src: r.url, title: r.name, type: 'url' }));
+    if (playlist.length > 0) {
+        const replace = confirm(
+            `¿Reemplazar la lista actual con tus ${tracks.length} radios guardadas?\n` +
             'Cancelar = agregar al final de la lista actual.'
         );
         if (replace) {

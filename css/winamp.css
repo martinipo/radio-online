@@ -505,6 +505,17 @@ body {
     color: #ffe866;
 }
 
+.pl-btn-my {
+    color: #44ddaa;
+    border-color: #006644 #002211 #002211 #006644;
+    background: #001a10;
+    letter-spacing: .5px;
+}
+.pl-btn-my:hover {
+    background: #002a18;
+    color: #66ffcc;
+}
+
 .pl-count {
     margin-left: auto;
     color: #444;
